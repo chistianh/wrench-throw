@@ -286,4 +286,4 @@ void load(openrac::Mod& mod) {
 
 }  // namespace
 
-OPENRAC_MOD_CPP("wrench-throw", "1.0.0", load)
+OPENRAC_MOD_CPP("wrench-throw", "1.0.1", load)

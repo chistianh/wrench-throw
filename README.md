@@ -14,7 +14,7 @@ Throw the OmniWrench as in *Ratchet & Clank Future: A Crack in Time*, in OpenRAC
 
 - R2 no longer crouches while you hold the wrench. **R1 still does**, so the high jump and the crouching swing are still there.
 - With a weapon in hand, switch to the wrench first.
-- It does not work with Lock-strafe: both use R2.
+- With [Lock-strafe](https://github.com/OpenRAC/openrac-mods/tree/master/lock-strafe), set its **Strafe button** to **L2 only**: L2 strafes and R2 stays for the wrench.
 - Tested on the PAL disc. **NTSC-U is not tested yet**: please report how it goes.
 
 ## How it works
