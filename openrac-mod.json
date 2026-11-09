@@ -1,0 +1,14 @@
+{
+  "format": 2,
+  "id": "wrench-throw",
+  "name": "Wrench Throw",
+  "version": "1.0.0",
+  "author": "Christian",
+  "description": "Throw the OmniWrench as in A Crack in Time: hold R2 to raise it and press Square to throw it while standing, running or jumping.",
+  "license": "GPL-3.0-or-later",
+  "homepage": "https://github.com/chistianh/wrench-throw",
+  "api": "1.12",
+  "games": { "rac1": ["pal", "ntsc"] },
+  "hooks": ["rac1.pad.process_report", "rac1.player.update"],
+  "conflicts": [{ "id": "lock-strafe", "reason": "Both use R2." }]
+}

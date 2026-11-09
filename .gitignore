@@ -1,0 +1,10 @@
+build/
+dist/
+work/
+.sdk/
+publicar/
+compilar.bat
+instalar.ps1
+probar.ps1
+hoja.py
+*.pyc
