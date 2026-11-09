@@ -4,7 +4,8 @@
 //
 // Con la llave en la mano:
 //   - R2 mantenido: Ratchet levanta el brazo, preparando el lanzamiento.
-//   - R2 + Cuadrado: lanza la llave hacia donde mira, de pie, corriendo o saltando.
+//   - R2 + Cuadrado: lanza la llave hacia donde mira, de pie, corriendo o saltando. Con un arma
+//     en la mano, primero cambia a la llave.
 //
 // Cómo funciona:
 //   - El gancho del mando quita R2 y Cuadrado de lo que ve el juego, para que no se agache ni
@@ -49,6 +50,9 @@ constexpr uint32_t k_hero_state = 0x2084u;
 constexpr uint32_t k_hero_control_mode = 0x208Cu;
 constexpr uint32_t k_hero_vehicle_mode = 0x20A4u;
 constexpr uint32_t k_hero_item_locked = 0x20ACu;
+// Pide al juego que cambie el objeto de la mano por la llave (hero.h: force_slot0_item8); es lo
+// mismo que hace al pulsar Cuadrado con un arma, y recuerda el arma para volver a ella.
+constexpr uint32_t k_hero_force_wrench = 0x20A6u;
 constexpr uint32_t k_hero_slip_ground = 0x12EAu;
 constexpr int32_t k_item_wrench = 8;
 
@@ -81,7 +85,9 @@ const Disc* s_disc = nullptr;
 void (*s_launch)() = nullptr;
 
 bool s_aiming = false;         // R2 mantenido, con la llave en la mano y a pie
-bool s_throw_pending = false;  // Cuadrado pulsado con R2: se lanza en la próxima actualización
+bool s_throw_pending = false;  // Cuadrado pulsado con R2: se lanza en cuanto se pueda
+int s_throw_wait = 0;          // ticks que quedan para esperar a que la llave llegue a la mano
+constexpr int k_throw_wait_ticks = 60;  // a lo sumo 1,2 s: si no llega, se olvida
 float s_raise = 0.0f;          // 0 brazo normal, 1 brazo levantado
 int s_throw_tick = -1;         // ticks desde el lanzamiento, -1 sin lanzamiento
 bool s_shown = false;          // hay huesos enviados al héroe
@@ -100,10 +106,14 @@ bool playing() {
            && ref<int32_t>(s_mod->relocate_level(0, s_disc->level_mode)) == 0;
 }
 
-bool on_foot_with_wrench() {
+// A pie, con algo en la mano (la llave, un arma o un artilugio).
+bool on_foot() {
     return playing() && ref<uint8_t>(hero() + k_hero_vehicle_mode) == 0
-           && ref<int32_t>(hero() + k_hero_slot0_item) == k_item_wrench
            && ref<uint32_t>(hero() + k_hero_slot0_moby) != 0;
+}
+
+bool on_foot_with_wrench() {
+    return on_foot() && ref<int32_t>(hero() + k_hero_slot0_item) == k_item_wrench;
 }
 
 // En el aire: los mismos estados en los que el juego deja golpear con la llave en un salto
@@ -155,7 +165,7 @@ void pad_process_report(Original original, gaddr pad_state, gaddr report, int32_
         return;
     }
     s_aiming = false;
-    if (!on_foot_with_wrench()) {
+    if (!on_foot()) {
         return;
     }
     const uint32_t held = ref<uint32_t>(pad_state + k_pad_held);
@@ -164,9 +174,11 @@ void pad_process_report(Original original, gaddr pad_state, gaddr report, int32_
         // Sin apuntar, solo se oculta R2 si sigue apuntando el juego: nada que hacer.
         return;
     }
-    s_aiming = true;
+    // El brazo solo se levanta con la llave en la mano; con un arma, R2 + Cuadrado la saca y la lanza.
+    s_aiming = on_foot_with_wrench();
     if ((pressed & k_btn_square) != 0) {
         s_throw_pending = true;
+        s_throw_wait = k_throw_wait_ticks;
     }
     hide_buttons(k_btn_r2 | k_btn_square);
 }
@@ -236,11 +248,16 @@ template <class Original>
 void hero_update(Original original) {
     original();
     if (s_throw_pending) {
-        s_throw_pending = false;
         if (can_throw()) {
+            s_throw_pending = false;
             s_launch();
             s_throw_tick = 0;
             s_mod->info("llave lanzada");
+        } else if (--s_throw_wait <= 0 || !on_foot()) {
+            s_throw_pending = false;
+        } else if (!on_foot_with_wrench()) {
+            // Con un arma: el juego cambia a la llave y se lanza cuando ya está en la mano.
+            ref<uint8_t>(hero() + k_hero_force_wrench) = 1;
         }
     }
     const float step = 1.0f / k_raise_ticks;
@@ -286,4 +303,4 @@ void load(openrac::Mod& mod) {
 
 }  // namespace
 
-OPENRAC_MOD_CPP("wrench-throw", "1.0.1", load)
+OPENRAC_MOD_CPP("wrench-throw", "1.0.2", load)
