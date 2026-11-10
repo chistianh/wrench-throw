@@ -2,7 +2,7 @@
 
 Throw the OmniWrench as in *Ratchet & Clank Future: A Crack in Time*, in OpenRAC's PC port of Ratchet & Clank.
 
-**[Watch the video](https://youtu.be/0yEa0jzs4_4)**
+**Videos:** [the throw](https://youtu.be/0yEa0jzs4_4) · [throwing with a weapon in hand](https://youtu.be/40figBwoU80)
 
 | On foot | |
 |---|---|

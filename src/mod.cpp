@@ -16,6 +16,7 @@
 //
 // Las direcciones del héroe y del mando son las del mod lock-strafe (GPL-3.0, OpenRAC).
 #include <cmath>
+#include <cstdio>
 #include <cstdlib>
 #include <cstdint>
 #include <string>
@@ -87,7 +88,7 @@ void (*s_launch)() = nullptr;
 bool s_aiming = false;         // R2 mantenido, con la llave en la mano y a pie
 bool s_throw_pending = false;  // Cuadrado pulsado con R2: se lanza en cuanto se pueda
 int s_throw_wait = 0;          // ticks que quedan para esperar a que la llave llegue a la mano
-constexpr int k_throw_wait_ticks = 60;  // a lo sumo 1,2 s: si no llega, se olvida
+constexpr int k_throw_wait_ticks = 90;  // a lo sumo 1,8 s: si no llega, se olvida
 float s_raise = 0.0f;          // 0 brazo normal, 1 brazo levantado
 int s_throw_tick = -1;         // ticks desde el lanzamiento, -1 sin lanzamiento
 bool s_shown = false;          // hay huesos enviados al héroe
@@ -110,6 +111,29 @@ bool playing() {
 bool on_foot() {
     return playing() && ref<uint8_t>(hero() + k_hero_vehicle_mode) == 0
            && ref<uint32_t>(hero() + k_hero_slot0_moby) != 0;
+}
+
+// A pie, lleve lo que lleve (aunque la mano esté vacía un instante al cambiar de objeto).
+bool on_foot_any() {
+    return playing() && ref<uint8_t>(hero() + k_hero_vehicle_mode) == 0;
+}
+
+// Una línea en el registro cuando un lanzamiento no sale, para entender el fallo (40 como mucho).
+int s_diag_lines = 0;
+void diag(const char* what) {
+    if (s_diag_lines >= 40) {
+        return;
+    }
+    ++s_diag_lines;
+    const gaddr moby = ref<uint32_t>(hero() + k_hero_slot0_moby);
+    char text[200];
+    std::snprintf(text, sizeof text,
+                  "%s: objeto %d, listo %d, estado 0x%X, modo %d, objeto de la mano %s, bloqueo %d, resbala %d",
+                  what, ref<int32_t>(hero() + k_hero_slot0_item), ref<int32_t>(hero() + k_hero_slot0_state),
+                  ref<int32_t>(hero() + k_hero_state), ref<int32_t>(hero() + k_hero_control_mode),
+                  moby != 0 ? (ref<uint8_t>(moby + k_moby_state) == 0 ? "quieto" : "ocupado") : "ninguno",
+                  ref<uint8_t>(hero() + k_hero_item_locked), ref<uint8_t>(hero() + k_hero_slip_ground));
+    s_mod->info(text);
 }
 
 bool on_foot_with_wrench() {
@@ -165,7 +189,7 @@ void pad_process_report(Original original, gaddr pad_state, gaddr report, int32_
         return;
     }
     s_aiming = false;
-    if (!on_foot()) {
+    if (!on_foot_any()) {
         return;
     }
     const uint32_t held = ref<uint32_t>(pad_state + k_pad_held);
@@ -252,9 +276,9 @@ void hero_update(Original original) {
             s_throw_pending = false;
             s_launch();
             s_throw_tick = 0;
-            s_mod->info("llave lanzada");
-        } else if (--s_throw_wait <= 0 || !on_foot()) {
+        } else if (--s_throw_wait <= 0 || !on_foot_any()) {
             s_throw_pending = false;
+            diag("no lanzada");
         } else if (!on_foot_with_wrench()) {
             // Con un arma: el juego cambia a la llave y se lanza cuando ya está en la mano.
             ref<uint8_t>(hero() + k_hero_force_wrench) = 1;
