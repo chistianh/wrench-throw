@@ -13,6 +13,7 @@ Throw the OmniWrench as in *Ratchet & Clank Future: A Crack in Time*, in OpenRAC
 ## Good to know
 
 - R2 no longer crouches on foot. **R1 still does**, so the high jump and the crouching swing are still there.
+- On the hoverboard (Rilgar, Kalebo III) the mod leaves every button to the game, so R2 and the other triggers do tricks as usual.
 - With [Lock-strafe](https://github.com/OpenRAC/openrac-mods/tree/master/lock-strafe), set its **Strafe button** to **L2 only**: L2 strafes and R2 stays for the wrench.
 - Tested on the PAL disc. **NTSC-U is not tested yet**: please report how it goes.
 
@@ -33,3 +34,10 @@ cmake --build build
 ```
 
 Made with AI assistance. License: GPL-3.0-or-later. The hero and pad addresses come from OpenRAC's [Lock-strafe](https://github.com/OpenRAC/openrac-mods/tree/master/lock-strafe).
+
+## Changes
+
+- **1.0.3**: hoverboard tricks work again. The game treats the hoverboard as being on foot, so the mod hid R2 there too and the tricks (and Rilgar's trick skill point) could not be done. The mod now leaves the buttons alone in the hoverboard's control mode. Thanks to EspeonScottie for the report.
+- **1.0.2**: R2 + Square with a weapon or gadget in hand switches to the wrench and throws it.
+- **1.0.1**: works beside Lock-strafe (strafe on L2 only).
+- **1.0.0**: first release.

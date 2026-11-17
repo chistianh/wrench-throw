@@ -49,6 +49,9 @@ constexpr uint32_t k_hero_slot0_state = 0x10B4u;  // 2 = listo
 constexpr uint32_t k_hero_slot0_item = 0x10B8u;
 constexpr uint32_t k_hero_state = 0x2084u;
 constexpr uint32_t k_hero_control_mode = 0x208Cu;
+// El modo de control de la tabla aérea (Rilgar y Kalebo III). Ahí R2 y los demás gatillos hacen
+// piruetas en el aire, así que el mod no debe quitarlos (ticket T-40).
+constexpr int32_t k_control_hoverboard = 0x16;
 constexpr uint32_t k_hero_vehicle_mode = 0x20A4u;
 constexpr uint32_t k_hero_item_locked = 0x20ACu;
 // Pide al juego que cambie el objeto de la mano por la llave (hero.h: force_slot0_item8); es lo
@@ -113,9 +116,11 @@ bool on_foot() {
            && ref<uint32_t>(hero() + k_hero_slot0_moby) != 0;
 }
 
-// A pie, lleve lo que lleve (aunque la mano esté vacía un instante al cambiar de objeto).
+// A pie, lleve lo que lleve (aunque la mano esté vacía un instante al cambiar de objeto). Encima
+// de la tabla aérea no cuenta: el juego la trata como a pie (vehicle_mode 0).
 bool on_foot_any() {
-    return playing() && ref<uint8_t>(hero() + k_hero_vehicle_mode) == 0;
+    return playing() && ref<uint8_t>(hero() + k_hero_vehicle_mode) == 0
+           && ref<int32_t>(hero() + k_hero_control_mode) != k_control_hoverboard;
 }
 
 // Una línea en el registro cuando un lanzamiento no sale, para entender el fallo (40 como mucho).
@@ -327,4 +332,4 @@ void load(openrac::Mod& mod) {
 
 }  // namespace
 
-OPENRAC_MOD_CPP("wrench-throw", "1.0.2", load)
+OPENRAC_MOD_CPP("wrench-throw", "1.0.3", load)
